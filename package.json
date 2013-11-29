@@ -1,0 +1,18 @@
+{
+  "name": "iview-for-taberareloo",
+  "description": "iview for Taberareloo",
+  "version": "0.8.0",
+  "homepage": "https://github.com/YungSang/iview-for-taberareloo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YungSang/iview-for-taberareloo.git"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-cli": "~0.1.7",
+    "grunt-contrib-jshint": "~0.6.4"
+  },
+  "scripts": {
+    "test": "grunt test"
+  }
+}
