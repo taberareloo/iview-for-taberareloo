@@ -31,7 +31,8 @@
   'use strict';
 
   var IVIEW_URL    = 'http://yungsang.github.io/iview-for-taberareloo/';
-  var SITEINFO_URL = 'http://wedata.github.io/iview/items.json';
+//  var SITEINFO_URL = 'http://wedata.github.io/iview/items.json';
+  var SITEINFO_URL = 'http://yungsang.com/wedata/iview.json';
 
   if (inContext('background')) {
     Menus._register({
@@ -298,7 +299,9 @@
       this.parseResponse(doc, siteinfo, base);
     },
     parseResponse: function (doc, siteinfo, baseURI, hashTemplate) {
+console.log('parseResponse', siteinfo, doc);
       var paragraphes = [].concat($X(siteinfo.paragraph, doc));
+console.log('parseResponse', paragraphes);
       if (paragraphes.length === 0) {
         console.error('Something wrong with siteinfo.paragraph');
         throw new TypeError('Something wrong with siteinfo.paragraph');
@@ -354,6 +357,7 @@
       }
     },
     parseParagraph: function (paragraph, siteinfo, baseURI) {
+console.log('parseParagraph');
       var image = {
         src: function () {
           return this.imageSourceForReblog || this.imageSource;
@@ -373,6 +377,7 @@
 
         var v;
         var rs = $X(xpath, paragraph);
+console.log(k, rs);
         if (typeof rs === 'string') {
           v = rs;
           if (k === 'caption') {
@@ -398,6 +403,7 @@
           }
         }
 
+console.log(k, v);
         image[k] = v;
       }
       return image;
@@ -788,6 +794,7 @@
         return node.textContent;
       }
     }
+console.log('$X', exp);
     var result = _document.evaluate(exp, context, resolver, XPathResult.ANY_TYPE, null);
     switch (result.resultType) {
     case XPathResult.STRING_TYPE:
@@ -802,6 +809,7 @@
       while ((i = result.iterateNext())) {
         ret.push(value(i));
       }
+console.log('$X', ret);
       return ret;
     }
   }
