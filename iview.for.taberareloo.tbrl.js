@@ -210,6 +210,9 @@
     },
     add: function (u, opts, callback) {
       this.queue.push(arguments);
+    },
+    clear: function () {
+      this.queue.length = 0;
     }
   };
 
@@ -233,6 +236,13 @@
       this.requestNextPage();
       this.eventListener = eventListener;
     },
+    stop: function () {
+      this.siteinfo      = null;
+      this.images.length = 0;
+      this.currentPage   = null;
+      this.lastPageDoc   = null;
+      this.lastPageURI   = null;
+    },
 
     requestingNextPage: false,
     largestRequestedImageIndex: -1,
@@ -253,7 +263,6 @@
       return this.images[n];
     },
     requestNextPage: function () {
-
       if (this.currentPage) {
         if (!this.siteinfo.nextLink) {
           return;
@@ -430,6 +439,8 @@
           iview.goRelative(1);
         } else if (c === 'k') {
           iview.goRelative(-1);
+        } else if (c === 'b') {
+          iview.goHome();
 //        } else if (c === 'p') {
 //          iview.launchPicLens();
         }
@@ -492,6 +503,9 @@
       }
     },
     goRelative: function (diff) {
+      if (!iviewLoader.siteinfo) {
+        return;
+      }
       var imageInfo = iviewLoader.getAt(this.position + diff);
       if (imageInfo) {
         var i = iviewLoader.getAt(this.position);
@@ -504,6 +518,15 @@
 
         this.show();
       }
+    },
+    goHome: function () {
+      requestBroker.clear();
+      iviewLoader.stop();
+      this.position = 0;
+      this.doc.getElementById('imageno').innerHTML = '';
+      this.doc.getElementById('imagebox').style.display = 'none';
+      this.doc.getElementById('footer').style.display = 'none';
+      this.doc.getElementById('imagesources').style.display = 'block';
     },
     constructTree: function (flatSiteinfo) {
       var siteinfo = {};
