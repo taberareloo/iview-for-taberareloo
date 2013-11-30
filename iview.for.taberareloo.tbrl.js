@@ -50,16 +50,132 @@
     });
     Menus.create();
 
+    var SiteInfo = {
+      getDirectory : function () {
+        var deferred = new Deferred();
+        var rfs = window.requestFileSystem || window.webkitRequestFileSystem;
+        rfs(window.PERSISTENT, 1024 * 1024, function (fs) {
+            fs.root.getDirectory('iview-for-taberareloo', { create : true },
+              function (dirEntry) {
+                deferred.callback(dirEntry);
+              },
+              function (e) {
+                deferred.errback(e);
+              }
+            );
+          },
+          function (e) {
+            deferred.errback(e);
+          }
+        );
+        return deferred;
+      },
+
+      getFromFS : function () {
+        var deferred = new Deferred();
+        this.getDirectory().addCallback(function (dirEntry) {
+          dirEntry.getFile('items.json', {},
+            function (fileEntry) {
+              Patches.readFromFileEntry(fileEntry).addCallback(function (sitoinfo) {
+                Sandbox.evalJSON(sitoinfo).addCallback(function (json) {
+                  deferred.callback(json);
+                });
+              }).addErrback(function (e) {
+                deferred.errback(e);
+              });
+            },
+            function (e) {
+              deferred.errback(e);
+            }
+          );
+        });
+        return deferred;
+      },
+
+      setIntoFS : function (siteinfo) {
+        var deferred = new Deferred();
+        this.getDirectory().addCallback(function (dirEntry) {
+          dirEntry.getFile('items.json', { create: true },
+            function (fileEntry) {
+              fileEntry.createWriter(
+                function (fileWriter) {
+                  fileWriter.onwriteend = function () {
+                    this.onwriteend = null;
+                    this.truncate(this.position);
+                    deferred.callback(fileEntry);
+                  };
+                  fileWriter.onerror = function (e) {
+                    deferred.errback(e);
+                  };
+                  var blob = new Blob(
+                    [ JSON.stringify(siteinfo) ],
+                    { type : 'text/plain' }
+                  );
+                  fileWriter.write(blob);
+                },
+                function (e) {
+                  deferred.errback(e);
+                }
+              );
+            },
+            function (e) {
+              deferred.errback(e);
+            }
+          );
+        });
+        return deferred;
+      },
+
+      checkLastModified : function (url, siteinfo) {
+        return request(url, {
+          method : 'HEAD'
+        }).addCallback(function (res) {
+          var current = new Date(siteinfo.last_modified);
+          var remote  = new Date(res.getResponseHeader('Last-Modified'));
+          return remote > current;
+        });
+      },
+
+      getFromRemote : function (url) {
+        return request(url, {
+          queryString : {
+            t : (new Date()).getTime()
+          }
+        }).addCallback(function (res) {
+          return Sandbox.evalJSON(res.responseText).addCallback(function (json) {
+            return {
+              resource_url  : url,
+              last_modified : res.getResponseHeader('Last-Modified'),
+              data          : json
+            };
+          });
+        });
+      }
+    };
+
     TBRL.setRequestHandler('loadSiteInfo', function (req, sender, func) {
-      request(req.url, {
-/* for debug
-        queryString : {
-          t : (new Date()).getTime()
-        }
-*/
-      }).addCallback(function (res) {
-        Sandbox.evalJSON(res.responseText).addCallback(function (json) {
-          func(json);
+      SiteInfo.getFromFS().addCallback(function (siteinfo) {
+        SiteInfo.checkLastModified(req.url, siteinfo).addCallback(function (updated) {
+          if (updated) {
+            console.log('UPDATED!, Get SITOINFOs from a remote repository');
+            SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
+              SiteInfo.setIntoFS(siteinfo);
+              func(siteinfo.data);
+            });
+          }
+          else {
+            console.log('Load SITOINFOs from a cache');
+            func(siteinfo.data);
+          }
+        }).addErrback(function (e) {
+          console.log('ERROR!, Load SITOINFOs from a cache');
+          func(siteinfo.data);
+        });
+      }).addErrback(function (e) {
+        console.log('Get SITOINFOs from a remote repository');
+        SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
+          SiteInfo.setIntoFS(siteinfo);
+          func(siteinfo.data);
         });
       });
     });
