@@ -24,6 +24,7 @@
 	- `j` for next
 	- `k` for previous
 	- `t` to share
+	- `o` to open the original
 	- `b` to go back home (to avoid reloading SITEINFOs)
 
 ## Contributing
