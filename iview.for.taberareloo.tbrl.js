@@ -468,6 +468,8 @@
           iview.goRelative(-1);
         } else if (c === 'b') {
           iview.goHome();
+        } else if (c === 'o') {
+          iview.openOriginal();
 //        } else if (c === 'p') {
 //          iview.launchPicLens();
         }
@@ -554,6 +556,13 @@
       this.doc.getElementById('imagebox').style.display = 'none';
       this.doc.getElementById('footer').style.display = 'none';
       this.doc.getElementById('imagesources').style.display = 'block';
+    },
+    openOriginal: function () {
+      var i = iviewLoader.getAt(this.position);
+      if (!i || !i.permalink) {
+        return;
+      }
+      window.open(i.permalink, '_iview_for_taberareloo');
     },
     constructTree: function (flatSiteinfo) {
       var siteinfo = {};
