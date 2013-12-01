@@ -33,6 +33,8 @@
   var IVIEW_URL    = 'http://yungsang.github.io/iview-for-taberareloo/';
   var SITEINFO_URL = 'http://wedata.github.io/iview/items.json';
 
+  var settings = {};
+
   if (inContext('background')) {
     Menus._register({
       type     : 'separator',
@@ -136,11 +138,16 @@
         });
       },
 
-      getFromRemote : function (url) {
+      getFromRemote : function (url, last_modified) {
+        var headers = {};
+        if (last_modified) {
+          headers['If-Modified-Since'] = last_modified;
+        }
         return request(url, {
           queryString : {
             t : (new Date()).getTime()
-          }
+          },
+          headers : headers
         }).addCallback(function (res) {
           return Sandbox.evalJSON(res.responseText).addCallback(function (json) {
             return {
@@ -154,7 +161,10 @@
     };
 
     TBRL.setRequestHandler('loadSiteInfo', function (req, sender, func) {
-      if (req.refresh) {
+      settings = req.settings;
+      settings.debug && console.log(req);
+      if (settings.refresh) {
+        settings.debug && console.log('Refresh! Get SITOINFOs from a remote repository');
         SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
           SiteInfo.setIntoFS(siteinfo);
           func(siteinfo.data);
@@ -162,24 +172,23 @@
         return;
       }
       SiteInfo.getFromFS().addCallback(function (siteinfo) {
-        SiteInfo.checkLastModified(req.url, siteinfo).addCallback(function (updated) {
-          if (updated) {
-            console.log('UPDATED!, Get SITOINFOs from a remote repository');
-            SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
-              SiteInfo.setIntoFS(siteinfo);
-              func(siteinfo.data);
-            });
+        SiteInfo.getFromRemote(req.url, siteinfo.last_modified).addCallback(function (siteinfo) {
+          settings.debug && console.log('Got SITOINFOs from a remote repository');
+          SiteInfo.setIntoFS(siteinfo);
+          func(siteinfo.data);
+        }).addErrback(function (e) {
+          settings.debug && console.log(e.message);
+          var res = e.message;
+          if (res.status && (res.status === 304)) {
+            settings.debug && console.log('Not Modified! Use SITOINFOs from a cache');
           }
           else {
-            console.log('Load SITOINFOs from a cache');
-            func(siteinfo.data);
+            console.error('Something wrong with remote SITEINFOs');
           }
-        }).addErrback(function (e) {
-          console.log('ERROR!, Load SITOINFOs from a cache');
           func(siteinfo.data);
         });
       }).addErrback(function (e) {
-        console.log('Get SITOINFOs from a remote repository');
+        settings.debug && console.log('Get SITOINFOs from a remote repository');
         SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
           SiteInfo.setIntoFS(siteinfo);
           func(siteinfo.data);
@@ -189,8 +198,8 @@
     return;
   }
 
-  var settings = querystring.parse(url.parse(location.href).query);
-  console.log(settings);
+  settings = querystring.parse(url.parse(location.href).query);
+  settings.debug && console.log('settings', settings);
 // debug=1, print console.log messages to debug
 // refresh=1, force to download remote SITEINFOs and refresh the cache
 // siteinfo=SITEINFO_URL, use this URL to download remote SITEINFOs
@@ -214,7 +223,7 @@
             var opts = args[1];
             var f = args[2];
             request(u, opts).addCallback(f).addErrback(function (e) {
-              console.log(e);
+              console.error(e);
             });
           }
         }
@@ -340,7 +349,7 @@
                 cdata = '<html><body>' + cdata + '</body></html>';
                 paragraph = createHTML(cdata);
               } catch (e) {
-                console.log(e);
+                console.error(e);
               }
             }
 
@@ -723,9 +732,9 @@
       this.showLoading(this.doc, true);
 
       chrome.runtime.sendMessage(TBRL.id, {
-        request : "loadSiteInfo",
-        url     : this.iviewSiteinfoURL,
-        refresh : settings.refresh
+        request  : "loadSiteInfo",
+        url      : this.iviewSiteinfoURL,
+        settings : settings
       }, function (json) {
         self.siteinfo = json;
 
