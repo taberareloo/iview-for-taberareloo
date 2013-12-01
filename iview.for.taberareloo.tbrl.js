@@ -4,7 +4,7 @@
 //   "name"        : "iview for Taberareloo"
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
-// , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/"]
+// , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
 // , "version"     : "0.10.0"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
@@ -31,8 +31,7 @@
   'use strict';
 
   var IVIEW_URL    = 'http://yungsang.github.io/iview-for-taberareloo/';
-//  var SITEINFO_URL = 'http://wedata.github.io/iview/items.json';
-  var SITEINFO_URL = 'http://yungsang.com/wedata/iview.json';
+  var SITEINFO_URL = 'http://wedata.github.io/iview/items.json';
 
   if (inContext('background')) {
     Menus._register({
@@ -155,6 +154,13 @@
     };
 
     TBRL.setRequestHandler('loadSiteInfo', function (req, sender, func) {
+      if (req.refresh) {
+        SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
+          SiteInfo.setIntoFS(siteinfo);
+          func(siteinfo.data);
+        });
+        return;
+      }
       SiteInfo.getFromFS().addCallback(function (siteinfo) {
         SiteInfo.checkLastModified(req.url, siteinfo).addCallback(function (updated) {
           if (updated) {
@@ -182,6 +188,12 @@
     });
     return;
   }
+
+  var settings = querystring.parse(url.parse(location.href).query);
+  console.log(settings);
+// debug=1, print console.log messages to debug
+// refresh=1, force to download remote SITEINFOs and refresh the cache
+// siteinfo=SITEINFO_URL, use this URL to download remote SITEINFOs
 
   var requestopts = {
 //    charset: 'utf-8'
@@ -299,9 +311,9 @@
       this.parseResponse(doc, siteinfo, base);
     },
     parseResponse: function (doc, siteinfo, baseURI, hashTemplate) {
-console.log('parseResponse', siteinfo, doc);
+      settings.debug && console.log('parseResponse', siteinfo, doc);
       var paragraphes = [].concat($X(siteinfo.paragraph, doc));
-console.log('parseResponse', paragraphes);
+      settings.debug && console.log('parseResponse', paragraphes);
       if (paragraphes.length === 0) {
         console.error('Something wrong with siteinfo.paragraph');
         throw new TypeError('Something wrong with siteinfo.paragraph');
@@ -357,7 +369,7 @@ console.log('parseResponse', paragraphes);
       }
     },
     parseParagraph: function (paragraph, siteinfo, baseURI) {
-console.log('parseParagraph');
+      settings.debug && console.log('parseParagraph');
       var image = {
         src: function () {
           return this.imageSourceForReblog || this.imageSource;
@@ -377,7 +389,7 @@ console.log('parseParagraph');
 
         var v;
         var rs = $X(xpath, paragraph);
-console.log(k, rs);
+        settings.debug && console.log(k, rs);
         if (typeof rs === 'string') {
           v = rs;
           if (k === 'caption') {
@@ -403,7 +415,7 @@ console.log(k, rs);
           }
         }
 
-console.log(k, v);
+        settings.debug && console.log(k, v);
         image[k] = v;
       }
       return image;
@@ -413,7 +425,7 @@ console.log(k, v);
   var iview = {
     position: 0,
     doc: null,
-    iviewSiteinfoURL: SITEINFO_URL,
+    iviewSiteinfoURL: settings.siteinfo || SITEINFO_URL,
     siteinfo: null,
     init: function (doc) {
       this.doc = doc;
@@ -712,7 +724,8 @@ console.log(k, v);
 
       chrome.runtime.sendMessage(TBRL.id, {
         request : "loadSiteInfo",
-        url     : this.iviewSiteinfoURL
+        url     : this.iviewSiteinfoURL,
+        refresh : settings.refresh
       }, function (json) {
         self.siteinfo = json;
 
@@ -794,7 +807,7 @@ console.log(k, v);
         return node.textContent;
       }
     }
-console.log('$X', exp);
+    settings.debug && console.log('$X', exp);
     var result = _document.evaluate(exp, context, resolver, XPathResult.ANY_TYPE, null);
     switch (result.resultType) {
     case XPathResult.STRING_TYPE:
@@ -809,7 +822,7 @@ console.log('$X', exp);
       while ((i = result.iterateNext())) {
         ret.push(value(i));
       }
-console.log('$X', ret);
+      settings.debug && console.log('$X', ret);
       return ret;
     }
   }
