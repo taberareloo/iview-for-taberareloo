@@ -162,9 +162,9 @@
 
     TBRL.setRequestHandler('loadSiteInfo', function (req, sender, func) {
       settings = req.settings;
-      settings.debug && console.log(req);
+      settings.debug && console.info(req);
       if (settings.refresh) {
-        settings.debug && console.log('Refresh! Get SITOINFOs from a remote repository');
+        settings.debug && console.info('Refresh! Get SITOINFOs from a remote repository');
         SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
           SiteInfo.setIntoFS(siteinfo);
           func(siteinfo.data);
@@ -173,22 +173,22 @@
       }
       SiteInfo.getFromFS().addCallback(function (siteinfo) {
         SiteInfo.getFromRemote(req.url, siteinfo.last_modified).addCallback(function (siteinfo) {
-          settings.debug && console.log('Got SITOINFOs from a remote repository');
+          settings.debug && console.info('Got SITOINFOs from a remote repository');
           SiteInfo.setIntoFS(siteinfo);
           func(siteinfo.data);
         }).addErrback(function (e) {
-          settings.debug && console.log(e.message);
+          settings.debug && console.info(e.message);
           var res = e.message;
           if (res.status && (res.status === 304)) {
-            settings.debug && console.log('Not Modified! Use SITOINFOs from a cache');
+            settings.debug && console.info('Not Modified! Use SITOINFOs from a cache');
           }
           else {
-            console.error('Something wrong with remote SITEINFOs');
+            console.warn('Something wrong with remote SITEINFOs');
           }
           func(siteinfo.data);
         });
       }).addErrback(function (e) {
-        settings.debug && console.log('Get SITOINFOs from a remote repository');
+        settings.debug && console.info('Get SITOINFOs from a remote repository');
         SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
           SiteInfo.setIntoFS(siteinfo);
           func(siteinfo.data);
@@ -199,8 +199,8 @@
   }
 
   settings = querystring.parse(url.parse(location.href).query);
-  settings.debug && console.log('settings', settings);
-// debug=1, print console.log messages to debug
+  settings.debug && console.info('settings', settings);
+// debug=1, print console messages to debug
 // refresh=1, force to download remote SITEINFOs and refresh the cache
 // siteinfo=SITEINFO_URL, use this URL to download remote SITEINFOs
 
@@ -326,28 +326,29 @@
       this.parseResponse(doc, siteinfo, base);
     },
     parseResponse: function (doc, siteinfo, baseURI, hashTemplate) {
-      settings.debug && console.log('parseResponse', siteinfo, doc);
+      settings.debug && console.group('parseResponse');
+      settings.debug && console.debug(siteinfo, doc);
       var paragraphes = [].concat($X(siteinfo.paragraph, doc));
-      settings.debug && console.log('parseResponse', paragraphes);
+      settings.debug && console.debug(paragraphes);
       if (paragraphes.length === 0) {
         console.error('Something wrong with siteinfo.paragraph');
         throw new TypeError('Something wrong with siteinfo.paragraph');
       }
       var self = this;
       paragraphes.map(function (paragraph, index) {
-        var d, img;
+        var img = {};
         if (siteinfo.subRequest && siteinfo.subRequest.paragraph) {
           img = self.parseParagraph(paragraph, siteinfo, baseURI);
 
           var subpage = img.permalink;
 
-          d = requestBroker.add(subpage, requestopts, function (res) {
+          requestBroker.add(subpage, requestopts, function (res) {
             self.onSubrequestLoad.apply(self, arguments);
           });
 
         } else {
           if (siteinfo.subParagraph && siteinfo.subParagraph.paragraph) {
-            d = self.parseParagraph(paragraph, siteinfo, baseURI);
+            var d = self.parseParagraph(paragraph, siteinfo, baseURI);
 
             if (siteinfo.subParagraph.cdata) {
               try {
@@ -373,6 +374,7 @@
           }
         }
       });
+      settings.debug && console.groupEnd();
 
       var obs = this.eventListener;
       obs && obs.onPageLoad.apply(obs);
@@ -384,7 +386,7 @@
       }
     },
     parseParagraph: function (paragraph, siteinfo, baseURI) {
-      settings.debug && console.log('parseParagraph');
+      settings.debug && console.group('parseParagraph');
       var image = {
         src: function () {
           return this.imageSourceForReblog || this.imageSource;
@@ -402,9 +404,9 @@
           continue;
         }
 
-        var v;
+        var v = null;
         var rs = $X(xpath, paragraph);
-        settings.debug && console.log(k, rs);
+        settings.debug && console.debug(k, rs);
         if (typeof rs === 'string') {
           v = rs;
           if (k === 'caption') {
@@ -415,7 +417,7 @@
         } else {
           var node = [].concat(rs).shift();
           if (!node) {
-            console.error('Something wrong with siteinfo.' + k);
+            console.warn('Something wrong with siteinfo.' + k);
           }
           else if (k === 'caption') {
             if (typeof node === 'object') {
@@ -430,9 +432,10 @@
           }
         }
 
-        settings.debug && console.log(k, v);
+        settings.debug && console.debug(k, v);
         image[k] = v;
       }
+      settings.debug && console.groupEnd();
       return image;
     }
   };
@@ -831,24 +834,32 @@
         return node.textContent;
       }
     }
-    settings.debug && console.log('$X', exp);
+    settings.debug && console.groupCollapsed('$X');
+    settings.debug && console.debug(exp);
+    var ret;
     var result = _document.evaluate(exp, context, resolver, XPathResult.ANY_TYPE, null);
     switch (result.resultType) {
     case XPathResult.STRING_TYPE:
-      return result.stringValue;
+      ret = result.stringValue;
+      break;
     case XPathResult.NUMBER_TYPE:
-      return result.numberValue;
+      ret = result.numberValue;
+      break;
     case XPathResult.BOOLEAN_TYPE:
-      return result.booleanValue;
+      ret = result.booleanValue;
+      break;
     case XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
       // not ensure the order.
-      var ret = [], i = null;
+      ret = [];
+      var i = null;
       while ((i = result.iterateNext())) {
         ret.push(value(i));
       }
-      settings.debug && console.log('$X', ret);
-      return ret;
+      break;
     }
+    settings.debug && console.debug(ret);
+    settings.debug && console.groupEnd();
+    return ret;
   }
 
   function valueOfNode(node) {
