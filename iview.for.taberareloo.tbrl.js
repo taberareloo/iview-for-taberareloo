@@ -264,6 +264,9 @@
       this.currentPage   = null;
       this.lastPageDoc   = null;
       this.lastPageURI   = null;
+
+      this.requestingNextPage         = false;
+      this.largestRequestedImageIndex = -1;
     },
 
     requestingNextPage: false,
@@ -291,6 +294,9 @@
         }
         var link = [].concat($X(this.siteinfo.nextLink, this.lastPageDoc)).shift();
         var nextLink = valueOfNode(link);
+        if (!nextLink) {
+          return;
+        }
         this.currentPage = url.resolve(this.lastPageURI, nextLink);
       } else {
         this.currentPage = this.siteinfo.url;
