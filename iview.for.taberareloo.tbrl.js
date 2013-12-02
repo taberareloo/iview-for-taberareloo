@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.2.1"
+// , "version"     : "1.2.2"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -417,7 +417,7 @@
           if (!node) {
             console.error('Something wrong with siteinfo.' + k);
           }
-          if (k === 'caption') {
+          else if (k === 'caption') {
             if (typeof node === 'object') {
               v =  node.textContent.trim();
             }
