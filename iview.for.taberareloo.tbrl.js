@@ -195,6 +195,60 @@
         });
       });
     });
+
+    var Referer = {
+      referer : null,
+
+      addBeforeSendHeader : function (filter, referer) {
+        this.removeBeforeSendHeader(filter);
+        settings.debug && console.info('addBeforeSendHeader', filter, referer);
+        this.referer = referer;
+        chrome.webRequest.onBeforeSendHeaders.addListener(
+          this.setRefererHeader,
+          { urls: [filter] },
+          [ "blocking", "requestHeaders" ]
+        );
+      },
+
+      removeBeforeSendHeader : function (filter) {
+        settings.debug && console.info('removeBeforeSendHeader', filter, this.referer);
+        this.referer = null;
+        chrome.webRequest.onBeforeSendHeaders.removeListener(
+          this.setRefererHeader,
+          { urls: [filter] },
+          [ "blocking", "requestHeaders" ]
+        );
+      },
+
+      setHTTPHeader : function (headers, name, value) {
+        var overwite = false;
+        for (var i = 0; i < headers.length; i++) {
+          if (headers[i].name.toLowerCase() === name.toLowerCase()) {
+            headers[i].value = value;
+            overwite = true;
+          }
+        }
+        return overwite ? headers : headers.concat({ name: name, value: value });
+      },
+
+      setRefererHeader : function (details) {
+        var headers = details.requestHeaders;
+        if (Referer.referer) {
+          settings.debug && console.info('Set Referer',  Referer.referer);
+          headers = Referer.setHTTPHeader(headers, 'Referer', Referer.referer);
+        }
+        return {requestHeaders: headers};
+      }
+    };
+
+    TBRL.setRequestHandler('addBeforeSendHeader', function (req, sender, func) {
+      Referer.addBeforeSendHeader(req.filter, req.referer);
+      func();
+    });
+    TBRL.setRequestHandler('removeBeforeSendHeader', function (req, sender, func) {
+      Referer.removeBeforeSendHeader(req.filter);
+      func();
+    });
     return;
   }
 
@@ -249,16 +303,37 @@
     lastPageDoc: null,
     lastPageURI: null,
     run: function (siteinfo, eventListener) {
+      var self = this;
+
       this.siteinfo = siteinfo;
       this.currentPage = null;
       this.lastPageURI = null;
       this.lastPageDoc = null;
       this.images = [];
 
-      this.requestNextPage();
-      this.eventListener = eventListener;
+      if (this.siteinfo.needReferer) {
+        chrome.runtime.sendMessage(TBRL.id, {
+          request  : "addBeforeSendHeader",
+          filter   : this.siteinfo.needReferer,
+          referer  : this.siteinfo.url
+        }, function () {
+          self.requestNextPage();
+          self.eventListener = eventListener;
+        });
+
+        window.addEventListener('beforeunload', this.removeFilter, false);
+      }
+      else {
+        this.requestNextPage();
+        this.eventListener = eventListener;
+      }
     },
     stop: function () {
+      if (this.siteinfo.needReferer) {
+        window.removeEventListener('beforeunload', this.removeFilter, false);
+        this.removeFilter();
+      }
+
       this.siteinfo      = null;
       this.images.length = 0;
       this.currentPage   = null;
@@ -267,6 +342,12 @@
 
       this.requestingNextPage         = false;
       this.largestRequestedImageIndex = -1;
+    },
+    removeFilter: function () {
+      chrome.runtime.sendMessage(TBRL.id, {
+        request : "removeBeforeSendHeader",
+        filter  : iviewLoader.siteinfo.needReferer
+      }, function () {});
     },
 
     requestingNextPage: false,
@@ -396,7 +477,7 @@
       for (var k in siteinfo) {
         var xpath = siteinfo[k];
 
-        if (k.match(/^url|paragraph|nextLink|cdata$/)) {
+        if (k.match(/^url|needReferer|paragraph|nextLink|cdata$/)) {
           continue;
         }
 
@@ -491,15 +572,27 @@
       var title = i.caption || i.permalink;
 
       var ctx = {
-        title   : title,
-        href    : i.permalink,
-        link    : {
+        document : document,
+        window   : window,
+        title    : title,
+        href     : i.permalink,
+        link     : {
           href : i.permalink
         },
-        onLink  : true,
-        onImage : true
+        onLink   : true,
+        onImage  : true,
+        target   : $N('img', {
+          src: i.src()
+        })
       };
-      var ext = Extractors['ReBlog - Tumblr link'];
+
+      var ext;
+      if (iviewLoader.siteinfo.needReferer) {
+        ext = Extractors['Photo - Upload from Cache'];
+      }
+      else {
+        ext = Extractors['ReBlog - Tumblr link'];
+      }
 
       (ext.check(ctx) ? TBRL.extract(ctx, ext) : succeed({
         type    : 'photo',
