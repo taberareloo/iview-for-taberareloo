@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.5.0"
+// , "version"     : "1.5.1"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -314,7 +314,7 @@
       this.lastPageDoc = null;
       this.images = [];
 
-      if (this.siteinfo.options.needReferer) {
+      if (this.siteinfo.options && this.siteinfo.options.needReferer) {
         chrome.runtime.sendMessage(TBRL.id, {
           request : "addBeforeSendHeader",
           headers : [{
@@ -335,7 +335,7 @@
       }
     },
     stop: function () {
-      if (this.siteinfo.options.needReferer) {
+      if (this.siteinfo.options && this.siteinfo.options.needReferer) {
         window.removeEventListener('beforeunload', this.removeFilter, false);
         this.removeFilter();
       }
@@ -592,7 +592,7 @@
       };
 
       var ext;
-      if (iviewLoader.siteinfo.options.needReferer) {
+      if (iviewLoader.siteinfo.options && iviewLoader.siteinfo.options.needReferer) {
         ext = Extractors['Photo - Upload from Cache'];
       }
       else {
