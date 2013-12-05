@@ -196,28 +196,40 @@
       });
     });
 
-    var Referer = {
-      referer : null,
+    var WebRequest = {
+      headers : null,
 
-      addBeforeSendHeader : function (filter, referer) {
-        this.removeBeforeSendHeader(filter);
-        settings.debug && console.info('addBeforeSendHeader', filter, referer);
-        this.referer = referer;
-        chrome.webRequest.onBeforeSendHeaders.addListener(
-          this.setRefererHeader,
-          { urls: [filter] },
-          [ "blocking", "requestHeaders" ]
-        );
+      addBeforeSendHeader : function (headers) {
+        settings.debug && console.info('addBeforeSendHeader', headers);
+        headers.forEach(function (header) {
+          header.listener = function (details) {
+            settings.debug && console.info('onBeforeSendHeaders', header);
+            var requestHeaders = details.requestHeaders;
+            requestHeaders = WebRequest.setHTTPHeader(requestHeaders, header.name, header.value);
+            return {requestHeaders: requestHeaders};
+          };
+          chrome.webRequest.onBeforeSendHeaders.addListener(
+            header.listener,
+            { urls: [header.filter] },
+            [ "blocking", "requestHeaders" ]
+          );
+        });
+        this.headers = headers;
       },
 
-      removeBeforeSendHeader : function (filter) {
-        settings.debug && console.info('removeBeforeSendHeader', filter, this.referer);
-        this.referer = null;
-        chrome.webRequest.onBeforeSendHeaders.removeListener(
-          this.setRefererHeader,
-          { urls: [filter] },
-          [ "blocking", "requestHeaders" ]
-        );
+      removeBeforeSendHeader : function () {
+        settings.debug && console.info('removeBeforeSendHeader', this.headers);
+        if (!this.headers) {
+          return;
+        }
+        this.headers.forEach(function (header) {
+          chrome.webRequest.onBeforeSendHeaders.removeListener(
+            header.listener,
+            { urls: [header.filter] },
+            [ "blocking", "requestHeaders" ]
+          );
+        });
+        this.headers = null;
       },
 
       setHTTPHeader : function (headers, name, value) {
@@ -229,24 +241,15 @@
           }
         }
         return overwite ? headers : headers.concat({ name: name, value: value });
-      },
-
-      setRefererHeader : function (details) {
-        var headers = details.requestHeaders;
-        if (Referer.referer) {
-          settings.debug && console.info('Set Referer',  Referer.referer);
-          headers = Referer.setHTTPHeader(headers, 'Referer', Referer.referer);
-        }
-        return {requestHeaders: headers};
       }
     };
 
     TBRL.setRequestHandler('addBeforeSendHeader', function (req, sender, func) {
-      Referer.addBeforeSendHeader(req.filter, req.referer);
+      WebRequest.addBeforeSendHeader(req.headers);
       func();
     });
     TBRL.setRequestHandler('removeBeforeSendHeader', function (req, sender, func) {
-      Referer.removeBeforeSendHeader(req.filter);
+      WebRequest.removeBeforeSendHeader();
       func();
     });
     return;
@@ -311,11 +314,14 @@
       this.lastPageDoc = null;
       this.images = [];
 
-      if (this.siteinfo.needReferer) {
+      if (this.siteinfo.options.needReferer) {
         chrome.runtime.sendMessage(TBRL.id, {
-          request  : "addBeforeSendHeader",
-          filter   : this.siteinfo.needReferer,
-          referer  : this.siteinfo.url
+          request : "addBeforeSendHeader",
+          headers : [{
+            filter : this.siteinfo.options.needReferer,
+            name   : 'Referer',
+            value  : this.siteinfo.url
+          }]
         }, function () {
           self.requestNextPage();
           self.eventListener = eventListener;
@@ -329,7 +335,7 @@
       }
     },
     stop: function () {
-      if (this.siteinfo.needReferer) {
+      if (this.siteinfo.options.needReferer) {
         window.removeEventListener('beforeunload', this.removeFilter, false);
         this.removeFilter();
       }
@@ -345,8 +351,7 @@
     },
     removeFilter: function () {
       chrome.runtime.sendMessage(TBRL.id, {
-        request : "removeBeforeSendHeader",
-        filter  : iviewLoader.siteinfo.needReferer
+        request : "removeBeforeSendHeader"
       }, function () {});
     },
 
@@ -477,7 +482,7 @@
       for (var k in siteinfo) {
         var xpath = siteinfo[k];
 
-        if (k.match(/^url|needReferer|paragraph|nextLink|cdata$/)) {
+        if (k.match(/^url|paragraph|nextLink|cdata|options$/)) {
           continue;
         }
 
@@ -587,7 +592,7 @@
       };
 
       var ext;
-      if (iviewLoader.siteinfo.needReferer) {
+      if (iviewLoader.siteinfo.options.needReferer) {
         ext = Extractors['Photo - Upload from Cache'];
       }
       else {
