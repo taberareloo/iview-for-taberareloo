@@ -8,7 +8,7 @@
 
 ## Installation
 
-1. Open Google Chrome, SRWare Iron or Opera 17, 19+
+1. Open Google Chrome, SRWare Iron or Opera 17+
 1. Install [Taberareloo](https://chrome.google.com/webstore/detail/taberareloo/ldcnohnnlpgglecmkldelbmiokgmikno)
 1. Install [iview for Taberareloo](http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js)  
 	- Open the above link
