@@ -534,6 +534,8 @@
     init: function (doc) {
       this.doc = doc;
 
+      this.doc.getElementById('no_patch_script').style.display = 'none';
+
       this.siteinfo = null;
       this.position = 0;
 

@@ -19,13 +19,13 @@
 
 1. Right-click and select 'iview' in Taberareloo menu  
 	or just open http://yungsang.github.io/iview-for-taberareloo/
-1. Click a site name in the list
+1. Select an image source on the list
 1. Navigate images  
-	- `j` for next
-	- `k` for previous
-	- `t` to share
-	- `o` to open the original
-	- `b` to go back home (to avoid reloading SITEINFOs)
+	- `J` for the next image
+	- `K` for the previous image
+	- `T` to share using Taberareloo
+	- `O` to open the original page where an image comes from
+	- `B` to go back home (to avoid reloading SITEINFOs)
 
 ## Contributing
 
