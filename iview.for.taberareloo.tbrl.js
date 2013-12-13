@@ -889,7 +889,13 @@
             "document.dispatchEvent(e);" +
           "})());";
 
-          li.push('<li><a href="' + jscode + '">' + definitions.name + '</a></li>');
+          var link = '<a href="' + jscode + '">' + definitions.name + '</a>';
+          if (definitions.data.options && definitions.data.options.NSFW) {
+            li.push('<li class="nsfw">' + link + '</li>');
+          }
+          else {
+            li.push('<li>' + link + '</li>');
+          }
         }
         ul.innerHTML = li.join("\n");
       });
