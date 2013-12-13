@@ -1,0 +1,16 @@
+{
+  "name"             : "iview for Taberareloo",
+  "description"      : "Launcher for \"iview for Taberareloo\"",
+  "manifest_version" : 2,
+  "version"          : "1.0.1",
+  "app" : {
+    "launch" : {
+      "web_url" : "http://yungsang.github.io/iview-for-taberareloo/"
+    }    
+  },
+  "icons"            : {
+    "128" : "icons/reblog-128.png",
+    "16"  : "icons/reblog-16.png"
+  },
+  "update_url"       : "http://yungsang.com/taberareloo/iview/update.xml"
+}
