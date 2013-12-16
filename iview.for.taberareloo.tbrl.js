@@ -36,6 +36,10 @@
   var settings = {};
 
   if (inContext('background')) {
+    if (!Patches['util.wedata.tbrl.js']) {
+      Patches.install('https://raw.github.com/YungSang/patches-for-taberareloo/master/utils/util.wedata.tbrl.js', true);
+    }
+
     Menus._register({
       type     : 'separator',
       contexts : ['all']
@@ -52,147 +56,12 @@
     });
     Menus.create();
 
-    var SiteInfo = {
-      getDirectory : function () {
-        var deferred = new Deferred();
-        var rfs = window.requestFileSystem || window.webkitRequestFileSystem;
-        rfs(window.PERSISTENT, 1024 * 1024, function (fs) {
-            fs.root.getDirectory('iview-for-taberareloo', { create : true },
-              function (dirEntry) {
-                deferred.callback(dirEntry);
-              },
-              function (e) {
-                deferred.errback(e);
-              }
-            );
-          },
-          function (e) {
-            deferred.errback(e);
-          }
-        );
-        return deferred;
-      },
-
-      getFromFS : function () {
-        var deferred = new Deferred();
-        this.getDirectory().addCallback(function (dirEntry) {
-          dirEntry.getFile('items.json', {},
-            function (fileEntry) {
-              Patches.readFromFileEntry(fileEntry).addCallback(function (sitoinfo) {
-                Sandbox.evalJSON(sitoinfo).addCallback(function (json) {
-                  deferred.callback(json);
-                });
-              }).addErrback(function (e) {
-                deferred.errback(e);
-              });
-            },
-            function (e) {
-              deferred.errback(e);
-            }
-          );
-        });
-        return deferred;
-      },
-
-      setIntoFS : function (siteinfo) {
-        var deferred = new Deferred();
-        this.getDirectory().addCallback(function (dirEntry) {
-          dirEntry.getFile('items.json', { create: true },
-            function (fileEntry) {
-              fileEntry.createWriter(
-                function (fileWriter) {
-                  fileWriter.onwriteend = function () {
-                    this.onwriteend = null;
-                    this.truncate(this.position);
-                    deferred.callback(fileEntry);
-                  };
-                  fileWriter.onerror = function (e) {
-                    deferred.errback(e);
-                  };
-                  var blob = new Blob(
-                    [ JSON.stringify(siteinfo) ],
-                    { type : 'text/plain' }
-                  );
-                  fileWriter.write(blob);
-                },
-                function (e) {
-                  deferred.errback(e);
-                }
-              );
-            },
-            function (e) {
-              deferred.errback(e);
-            }
-          );
-        });
-        return deferred;
-      },
-
-      checkLastModified : function (url, siteinfo) {
-        return request(url, {
-          method : 'HEAD'
-        }).addCallback(function (res) {
-          var current = new Date(siteinfo.last_modified);
-          var remote  = new Date(res.getResponseHeader('Last-Modified'));
-          return remote > current;
-        });
-      },
-
-      getFromRemote : function (url, last_modified) {
-        var headers = {};
-        if (last_modified) {
-          headers['If-Modified-Since'] = last_modified;
-        }
-        return request(url, {
-          queryString : {
-            t : (new Date()).getTime()
-          },
-          headers : headers
-        }).addCallback(function (res) {
-          return Sandbox.evalJSON(res.responseText).addCallback(function (json) {
-            return {
-              resource_url  : url,
-              last_modified : res.getResponseHeader('Last-Modified'),
-              data          : json
-            };
-          });
-        });
-      }
-    };
-
     TBRL.setRequestHandler('loadSiteInfo', function (req, sender, func) {
       settings = req.settings;
       settings.debug && console.info(req);
-      if (settings.refresh) {
-        settings.debug && console.info('Refresh! Get SITOINFOs from a remote repository');
-        SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
-          SiteInfo.setIntoFS(siteinfo);
-          func(siteinfo.data);
-        });
-        return;
-      }
-      SiteInfo.getFromFS().addCallback(function (siteinfo) {
-        SiteInfo.getFromRemote(req.url, siteinfo.last_modified).addCallback(function (siteinfo) {
-          settings.debug && console.info('Got SITOINFOs from a remote repository');
-          SiteInfo.setIntoFS(siteinfo);
-          func(siteinfo.data);
-        }).addErrback(function (e) {
-          settings.debug && console.info(e.message);
-          var res = e.message;
-          if (res.status && (res.status === 304)) {
-            settings.debug && console.info('Not Modified! Use SITOINFOs from a cache');
-          }
-          else {
-            console.warn('Something wrong with remote SITEINFOs');
-          }
-          func(siteinfo.data);
-        });
-      }).addErrback(function (e) {
-        settings.debug && console.info('Get SITOINFOs from a remote repository');
-        SiteInfo.getFromRemote(req.url).addCallback(function (siteinfo) {
-          SiteInfo.setIntoFS(siteinfo);
-          func(siteinfo.data);
-        });
+      var database = new Wedata.Database('iview-for-taberareloo', req.url, settings.debug);
+      database.get(settings.refresh).addCallback(function (data) {
+        func(JSON.parse(data));
       });
     });
 
