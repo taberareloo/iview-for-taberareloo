@@ -409,7 +409,7 @@
       var doc = this.lastPageDoc = res.response;
 
       var base = this.lastPageURI;
-      this.parseResponse(doc, siteinfo, base);
+      this.parseResponse(doc, siteinfo, base, {});
     },
     parseResponse: function (doc, siteinfo, baseURI, hashTemplate) {
       settings.debug && console.group('parseResponse');
@@ -449,13 +449,12 @@
             var subparagraphes = $X(siteinfo.subParagraph.paragraph, paragraph);
             subparagraphes.map(function (subparagraph) {
               img = self.parseParagraph(subparagraph, siteinfo.subParagraph, baseURI);
-              img = update(img, d);
-              img = update(img, hashTemplate);
+              img = MochiKit.Base.update({}, hashTemplate, d, img);
               self.addToImageList(img);
             });
           } else {
             img = self.parseParagraph(paragraph, siteinfo, baseURI);
-            img = update(img, hashTemplate);
+            img = MochiKit.Base.update({}, hashTemplate, img);
             self.addToImageList(img);
           }
         }
