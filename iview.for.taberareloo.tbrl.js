@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.8.1"
+// , "version"     : "1.8.2"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -36,22 +36,35 @@
   var settings = {};
 
   if (inContext('background')) {
-    var patch = Patches['util.wedata.tbrl.js'];
-    if (patch) {
-      var preference = Patches.getPreferences(patch.name) || {};
-      if (preference.disabled) {
-        Patches.setPreferences(patch.name, update(preference, {
-          disabled : false
-        }));
-        Patches.loadAndRegister(patch.fileEntry, patch.metadata);
+    Patches.require = Patches.require || function (url) {
+      var name = window.url.parse(url).path.split(/[\/\\]/).pop();
+      var ret = new Deferred();
+      var deferred;
+      var patch = this[name];
+      if (patch) {
+        var preference = this.getPreferences(patch.name) || {};
+        if (preference.disabled) {
+          this.setPreferences(patch.name, MochiKit.Base.update(preference, {
+            disabled : false
+          }));
+          deferred = this.loadAndRegister(patch.fileEntry, patch.metadata);
+        }
+        else {
+          return succeed(true);
+        }
       }
-    }
-    else {
-      Patches.install(
-        'https://raw.github.com/YungSang/patches-for-taberareloo/master/utils/util.wedata.tbrl.js',
-        true
-      );
-    }
+      else {
+        deferred = this.install(url, true);
+      }
+      deferred.addCallback(function (patch) {
+        setTimeout(function () {
+          ret.callback(!!patch);
+        }, 100);
+      });
+      return ret;
+    };
+
+    Patches.require('https://raw.github.com/YungSang/patches-for-taberareloo/master/utils/util.wedata.tbrl.js');
 
     Menus._register({
       type     : 'separator',
