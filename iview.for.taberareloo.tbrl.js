@@ -215,7 +215,7 @@
           headers : [{
             filter : this.siteinfo.options.needReferer,
             name   : 'Referer',
-            value  : this.siteinfo.url
+            value  : this.siteinfo.options.refererUrl || this.siteinfo.url
           }]
         }, function () {
           self.requestNextPage();
