@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.9.1"
+// , "version"     : "1.9.2"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -48,21 +48,14 @@
             disabled : false
           }));
           deferred = this.loadAndRegister(patch.fileEntry, patch.metadata);
+        } else {
+          return succeed(true);
         }
-        else {
-          setTimeout(function () {
-            ret.callback(true);
-          }, (typeof delay === 'number') ? delay : 500);
-          return ret;
-        }
-      }
-      else {
+      } else {
         deferred = this.install(url, true);
       }
       deferred.addCallback(function (patch) {
-        setTimeout(function () {
-          ret.callback(!!patch);
-        }, (typeof delay === 'number') ? delay : 500);
+        ret.callback(!!patch);
       });
       return ret;
     };
