@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.10.0"
+// , "version"     : "1.10.1"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -170,12 +170,12 @@
           var args = self.queue.shift();
 
           if (args) {
-            var u = args[0];
+            var url  = args[0];
             var opts = args[1];
-            var f = args[2];
-            request(u, opts).addCallback(function (res) {
-              f(res);
-              self.timer = setTimeout(worker, 0);
+            var func = args[2];
+            request(url, opts).addCallback(function (res) {
+              func(res);
+              self.timer = setTimeout(worker, 100);
             }).addErrback(function (e) {
               console.error(e);
               self.timer = setTimeout(worker, self.interval);
@@ -188,7 +188,7 @@
         }
       }, this.interval);
     },
-    add : function (u, opts, callback) {
+    add : function (url, opts, callback) {
       this.queue.push(arguments);
     },
     clear : function () {
@@ -362,7 +362,7 @@
     },
     addToImageList : function (img) {
       if (img.imageSource && img.permalink) {
-        (new window.Image()).src = img.imageSource;
+        (new Image()).src = img.imageSource;
         this.images.push(img);
       }
     },
@@ -434,9 +434,6 @@
       this.siteinfo = null;
       this.position = 0;
 
-      doc.addEventListener("onIviewFxNext", function () {
-        //iviewLoader.onImageSourceSelected.apply(iview, arguments);
-      }, false);
       doc.addEventListener("onJSONPLoad", function () {
         iview.onImageSourceSelected.apply(iview, arguments);
       }, false);
@@ -462,8 +459,6 @@
           iview.goHome();
         } else if (c === 'o') {
           iview.openOriginal();
-//        } else if (c === 'p') {
-//          iview.launchPicLens();
         }
 
       }, false);
@@ -523,11 +518,11 @@
 
       } else {
         var n = 0;
-        var timerid = window.setInterval(function () {
+        var timerid = setInterval(function () {
           if (n++ < 10) {
             r.style.opacity = 1 - (0.1 * n);
           } else {
-            window.clearInterval(timerid);
+            clearInterval(timerid);
             r.style.opacity = 1;
             r.style.display = 'none';
           }
@@ -593,10 +588,11 @@
         return;
       }
 
+      this.showLoading(this.doc, false);
+
       this.doc.getElementById('imageno').innerHTML = (this.position + 1) + "/" + iviewLoader.images.length;
       this.showRebloggingBox(imageInfo);
 
-      //this.removeAllChildren();
       var box = this.doc.getElementById('imagebox');
       box.style.display = 'block';
 
@@ -605,7 +601,7 @@
       var img = this.doc.getElementById('imageElement');
       img.setAttribute('src', null);
 
-      window.setTimeout(function () {
+      setTimeout(function () {
         img.setAttribute('src', imageInfo.imageSource);
       }, 20);
 
@@ -613,18 +609,8 @@
       a.setAttribute('href', imageInfo.permalink);
       a.innerHTML = imageInfo.caption;
     },
-    removeAllChildren : function (e) {
-      while (e.firstChild) {
-        e.removeChild(e.firstChild);
-      }
-    },
     onImageSourceSelected : function (ev) {
-  /*
-      this.glasscaseDiv.style.opacity = 1;
-      this.glasscaseDiv.style.position = 'fixed';
-      this.glasscaseDiv.style.top = 0;
-      this.glasscaseDiv.style.bottom = 0;
-  */
+      this.showLoading(this.doc, true, 'Loading Image...');
 
       this.doc.getElementById('footer').style.display = 'block';
 
@@ -634,47 +620,11 @@
       this.doc.getElementById('sourcename').innerHTML =
         '<a href="' + siteinfo.url + '">' + this.siteinfo[key].name + '</a>';
 
-      //this.removeAllChildren();
-      //
       this.doc.getElementById('imagesources').style.display = 'none';
 
       iviewLoader.run(siteinfo, this);
     },
-    launchPicLens : function () {
-      var items = [];
-      iviewLoader.images.forEach(function (photo) {
-        var imegeUri = photo.src();
-        items.push('<item>' +
-            '<title>' + photo.caption + '</title>' +
-            '<link>' + photo.permalink + '</link>' +
-            '<media:thumbnail url="' + imegeUri + '" />' +
-            '<media:content url="' + imegeUri + '" />' +
-          '</item>'
-        );
-      });
-
-      var file = getTempDir('photos.rss');
-      putContents(file, '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-        '<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss"><channel>' +
-          items.join('') +
-         '</channel></rss>');
-
-      this.doc.location = 'javascript:piclens = new PicLensContext();piclens.launch("' + createURI(file).asciiSpec + '", "", "")';
-    },
-    /*
-    setStyle : function (doc) {
-      var css = doc.createElement('style');
-      css.innerHTML =
-        ' a {' +
-        '   background-color : black !important;' +
-        '   color : white !important;' +
-        '   font-size : small !important;' +
-        ' }' ;
-
-      doc.body.appendChild(css);
-    },
-    */
-    showLoading : function (doc, show) {
+    showLoading : function (doc, show, msg) {
       if (show) {
         var d = doc.createElement("div");
 
@@ -690,60 +640,25 @@
         d.style.margin =   "0px auto";
         d.style.right = d.style.top = "0.2em";
         d.style.textAlign = "center";
-        d.innerHTML = "Loading Image Sources...";
+        d.innerHTML = msg;
 
         doc.body.appendChild(d);
 
         this.loadingDiv = d;
       } else {
-        this.loadingDiv.parentNode.removeChild(this.loadingDiv);
-        this.loadingDiv = null;
+        if (this.loadingDiv) {
+          this.loadingDiv.parentNode.removeChild(this.loadingDiv);
+          this.loadingDiv = null;
+        }
       }
-    },
-
-    glasscaseDiv : null,
-
-    glasscase : function () {
-      var doc = this.doc;
-      var outerbox = this.outerbox = doc.createElement("div");
-
-      outerbox.style.position = "absolute";
-      outerbox.style.left = 0;
-      outerbox.style.top = 0;
-      outerbox.style.right = 0;
-      outerbox.style.height = 0;
-
-      var d = this.innerbox = doc.createElement("div");
-
-      d.style.left = 0;
-      d.style.right = 0;
-
-      //d.style.position = "absolute";
-      d.style.fontSize = "30px";
-      d.style.background = "black";
-      d.style.color = "white";
-      //d.style.MozBorderRadius = "0.2em";
-      d.style.padding = "0.2em";
-      d.style.opacity = 0.95;
-      d.style.marginLeft = "auto";
-      d.style.marginRight = "auto";
-      d.style.margin =   "0px auto";
-      //d.style.right = d.style.top = "0";
-      d.style.zIndex = 0x7ffffff;
-
-      outerbox.appendChild(d);
-      doc.body.appendChild(outerbox);
-
-      this.glasscaseDiv = d;
-      return d;
     },
     onPageLoad : function () {
       this.show();
     },
     loadJson : function () {
       var self = this;
-      //this.setStyle(this.doc);
-      this.showLoading(this.doc, true);
+
+      this.showLoading(this.doc, true, 'Loading Image Sources...');
 
       chrome.runtime.sendMessage(TBRL.id, {
         request  : "loadSiteInfo",
@@ -753,32 +668,13 @@
         self.siteinfo = json;
 
         self.showLoading(self.doc, false);
-        //var glasscase = self.glasscase();
 
-        //
-        // MochiKit.keys not found in command script scope.
-        //
         self.doc.getElementById('imagesources').style.display = 'block';
         var ul = self.doc.getElementById('imagesourcelist');
 
         var li = [];
         for (var k in json) {
           var definitions = json[k];
-
-          // I dont know why but last one is a function not siteinfo.
-          // need to check it.
-          if (!definitions.data) {
-            continue;
-          }
-
-          // not supported yet.
-          //if ( definitions.data['subRequest.paragraph'] ) {
-          //  continue;
-          //}
-
-          //if ( definitions.data.paragraph.match(/x:/) ) {
-          //  continue;
-          //}
 
           var jscode = "javascript:void((function(){" +
             "e=new CustomEvent('onJSONPLoad',{detail:" + k + "});" +
