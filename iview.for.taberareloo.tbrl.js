@@ -284,23 +284,16 @@
       this.requestingNextPage = true;
       var self = this;
       requestBroker.add(nextPage, requestopts, function (res) {
-        self.requestingNextPage = false;
         self.lastPageURI = nextPage;
-        self.onPageLoad.apply(self, arguments);
+        self.lastPageDoc = res.response;
+        self.requestingNextPage = false;
+        self.parseResponse(self.lastPageDoc, self.siteinfo, self.lastPageURI, {});
       });
     },
     onSubrequestLoad: function (res) {
       var siteinfo = this.siteinfo.subRequest;
       var doc = res.response;
       this.parseResponse(doc, siteinfo, doc.baseURI, {permalink: doc.URL});
-    },
-    onPageLoad: function (res) {
-      var siteinfo = this.siteinfo;
-
-      var doc = this.lastPageDoc = res.response;
-
-      var base = this.lastPageURI;
-      this.parseResponse(doc, siteinfo, base, {});
     },
     parseResponse: function (doc, siteinfo, baseURI, hashTemplate) {
       settings.debug && console.group('parseResponse');
