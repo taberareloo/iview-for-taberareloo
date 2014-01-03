@@ -158,11 +158,14 @@
   };
 
   var requestBroker = {
-    queue: [],
-    init: function () {
-      this.queue = [];
+    timer    : null,
+    queue    : [],
+    interval : 500,
+
+    init : function () {
       var self = this;
-      var brokertimer = window.setInterval(function () {
+      this.queue.length = 0;
+      this.timer = setTimeout(function worker() {
         if (iviewLoader.shouldPrefetch()) {
           var args = self.queue.shift();
 
@@ -170,13 +173,20 @@
             var u = args[0];
             var opts = args[1];
             var f = args[2];
-            request(u, opts).addCallback(f).addErrback(function (e) {
+            request(u, opts).addCallback(function (res) {
+              f(res);
+              self.timer = setTimeout(worker, 0);
+            }).addErrback(function (e) {
               console.error(e);
+              self.timer = setTimeout(worker, self.interval);
             });
+          } else {
+            self.timer = setTimeout(worker, self.interval);
           }
+        } else {
+          self.timer = setTimeout(worker, self.interval);
         }
-      }, 500);
-      return brokertimer;
+      }, this.interval);
     },
     add: function (u, opts, callback) {
       this.queue.push(arguments);
@@ -785,9 +795,11 @@
     }
   };
 
-  var brokerTimer = requestBroker.init();
+  requestBroker.init();
   document.addEventListener('unload', function () {
-    window.clearInterval(brokerTimer);
+    if (requestBroker.timer) {
+      clearTimeout(requestBroker.timer);
+    }
   }, false);
   iview.init(document);
   iview.loadJson();
