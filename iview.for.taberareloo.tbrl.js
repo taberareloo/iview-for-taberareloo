@@ -97,11 +97,11 @@
             settings.debug && console.info('onBeforeSendHeaders', header);
             var requestHeaders = details.requestHeaders;
             requestHeaders = WebRequest.setHTTPHeader(requestHeaders, header.name, header.value);
-            return {requestHeaders: requestHeaders};
+            return {requestHeaders : requestHeaders};
           };
           chrome.webRequest.onBeforeSendHeaders.addListener(
             header.listener,
-            { urls: [header.filter] },
+            { urls : [header.filter] },
             [ "blocking", "requestHeaders" ]
           );
         });
@@ -116,7 +116,7 @@
         this.headers.forEach(function (header) {
           chrome.webRequest.onBeforeSendHeaders.removeListener(
             header.listener,
-            { urls: [header.filter] },
+            { urls : [header.filter] },
             [ "blocking", "requestHeaders" ]
           );
         });
@@ -131,7 +131,7 @@
             overwite = true;
           }
         }
-        return overwite ? headers : headers.concat({ name: name, value: value });
+        return overwite ? headers : headers.concat({ name : name, value : value });
       }
     };
 
@@ -153,8 +153,8 @@
 // siteinfo=SITEINFO_URL, use this URL to download remote SITEINFOs
 
   var requestopts = {
-//    charset: 'utf-8'
-    responseType: 'document'
+//    charset : 'utf-8'
+    responseType : 'document'
   };
 
   var requestBroker = {
@@ -188,32 +188,35 @@
         }
       }, this.interval);
     },
-    add: function (u, opts, callback) {
+    add : function (u, opts, callback) {
       this.queue.push(arguments);
     },
-    clear: function () {
+    clear : function () {
       this.queue.length = 0;
     }
   };
 
   var iviewLoader = {
-    siteinfo: null,
+    PREFETCHSIZE : 20,
 
-    PREFETCHSIZE: 20,
+    siteinfo      : null,
+    images        : [],
+    currentPage   : null,
+    eventListener : null,
+    lastPageDoc   : null,
+    lastPageURI   : null,
 
-    images: [],
-    currentPage: null,
-    eventListener: null,
-    lastPageDoc: null,
-    lastPageURI: null,
-    run: function (siteinfo, eventListener) {
+    run : function (siteinfo, eventListener) {
       var self = this;
 
-      this.siteinfo = siteinfo;
-      this.currentPage = null;
-      this.lastPageURI = null;
-      this.lastPageDoc = null;
-      this.images = [];
+      this.siteinfo      = siteinfo;
+      this.images.length = 0;
+      this.currentPage   = null;
+      this.eventListener = null;
+      this.lastPageURI   = null;
+      this.lastPageDoc   = null;
+      this.requestingNextPage = false;
+      this.largestRequestedImageIndex = -1;
 
       if (this.siteinfo.options && this.siteinfo.options.needReferer) {
         chrome.runtime.sendMessage(TBRL.id, {
@@ -229,13 +232,12 @@
         });
 
         window.addEventListener('beforeunload', this.removeFilter, false);
-      }
-      else {
+      } else {
         this.requestNextPage();
         this.eventListener = eventListener;
       }
     },
-    stop: function () {
+    stop : function () {
       if (this.siteinfo.options && this.siteinfo.options.needReferer) {
         window.removeEventListener('beforeunload', this.removeFilter, false);
         this.removeFilter();
@@ -244,25 +246,26 @@
       this.siteinfo      = null;
       this.images.length = 0;
       this.currentPage   = null;
+      this.eventListener = null;
       this.lastPageDoc   = null;
       this.lastPageURI   = null;
 
-      this.requestingNextPage         = false;
+      this.requestingNextPage = false;
       this.largestRequestedImageIndex = -1;
     },
-    removeFilter: function () {
+    removeFilter : function () {
       chrome.runtime.sendMessage(TBRL.id, {
         request : "removeBeforeSendHeader"
       }, function () {});
     },
 
-    requestingNextPage: false,
-    largestRequestedImageIndex: -1,
-    shouldPrefetch: function () {
+    requestingNextPage : false,
+    largestRequestedImageIndex : -1,
+    shouldPrefetch : function () {
       var b = (this.images.length - this.largestRequestedImageIndex <= this.PREFETCHSIZE);
       return b;
     },
-    getAt: function (n) {
+    getAt : function (n) {
       if (n > this.largestRequestedImageIndex) {
         this.largestRequestedImageIndex = n;
       }
@@ -271,10 +274,9 @@
           this.requestNextPage();
         }
       }
-
       return this.images[n];
     },
-    requestNextPage: function () {
+    requestNextPage : function () {
       if (this.currentPage) {
         if (!this.siteinfo.nextLink) {
           return;
@@ -300,12 +302,12 @@
         self.parseResponse(self.lastPageDoc, self.siteinfo, self.lastPageURI, {});
       });
     },
-    onSubrequestLoad: function (res) {
+    onSubrequestLoad : function (res) {
       var siteinfo = this.siteinfo.subRequest;
       var doc = res.response;
-      this.parseResponse(doc, siteinfo, doc.baseURI, {permalink: doc.URL});
+      this.parseResponse(doc, siteinfo, doc.baseURI, {permalink : doc.URL});
     },
-    parseResponse: function (doc, siteinfo, baseURI, hashTemplate) {
+    parseResponse : function (doc, siteinfo, baseURI, hashTemplate) {
       settings.debug && console.group('parseResponse');
       settings.debug && console.debug(siteinfo, doc);
       var paragraphes = [].concat($X(siteinfo.paragraph, doc));
@@ -358,16 +360,16 @@
       var obs = this.eventListener;
       obs && obs.onPageLoad.apply(obs);
     },
-    addToImageList: function (img) {
+    addToImageList : function (img) {
       if (img.imageSource && img.permalink) {
         (new window.Image()).src = img.imageSource;
         this.images.push(img);
       }
     },
-    parseParagraph: function (paragraph, siteinfo, baseURI) {
+    parseParagraph : function (paragraph, siteinfo, baseURI) {
       settings.debug && console.group('parseParagraph');
       var image = {
-        src: function () {
+        src : function () {
           return this.imageSourceForReblog || this.imageSource;
         }
       };
@@ -397,12 +399,10 @@
           var node = [].concat(rs).shift();
           if (!node) {
             console.warn('Something wrong with siteinfo.' + k);
-          }
-          else if (k === 'caption') {
+          } else if (k === 'caption') {
             if (typeof node === 'object') {
               v =  node.textContent.trim();
-            }
-            else {
+            } else {
               v = valueOfNode(node);
             }
           } else {
@@ -420,11 +420,13 @@
   };
 
   var iview = {
-    position: 0,
-    doc: null,
-    iviewSiteinfoURL: settings.siteinfo || SITEINFO_URL,
-    siteinfo: null,
-    init: function (doc) {
+    iviewSiteinfoURL : settings.siteinfo || SITEINFO_URL,
+
+    doc       : null,
+    siteinfo  : null,
+    position  : 0,
+
+    init : function (doc) {
       this.doc = doc;
 
       this.doc.getElementById('no_patch_script').style.display = 'none';
@@ -466,7 +468,7 @@
 
       }, false);
     },
-    share: function () {
+    share : function () {
       var i = iviewLoader.getAt(this.position);
 
       var title = i.caption || i.permalink;
@@ -482,15 +484,14 @@
         onLink   : true,
         onImage  : true,
         target   : $N('img', {
-          src: i.src()
+          src : i.src()
         })
       };
 
       var ext;
       if (iviewLoader.siteinfo.options && iviewLoader.siteinfo.options.needReferer) {
         ext = Extractors['Photo - Upload from Cache'];
-      }
-      else {
+      } else {
         ext = Extractors['ReBlog - Tumblr link'];
       }
 
@@ -509,7 +510,7 @@
         }, function () { });
       });
     },
-    showRebloggingBox: function (i) {
+    showRebloggingBox : function (i) {
       var r = this.doc.getElementById('reblogging');
       if (i.reblogging) {
         var img = this.doc.getElementById('imageElement');
@@ -533,7 +534,7 @@
         }, 50);
       }
     },
-    goRelative: function (diff) {
+    goRelative : function (diff) {
       if (!iviewLoader.siteinfo) {
         return;
       }
@@ -550,7 +551,7 @@
         this.show();
       }
     },
-    goHome: function () {
+    goHome : function () {
       requestBroker.clear();
       iviewLoader.stop();
       this.position = 0;
@@ -559,14 +560,14 @@
       this.doc.getElementById('footer').style.display = 'none';
       this.doc.getElementById('imagesources').style.display = 'block';
     },
-    openOriginal: function () {
+    openOriginal : function () {
       var i = iviewLoader.getAt(this.position);
       if (!i || !i.permalink) {
         return;
       }
       window.open(i.permalink, '_iview_for_taberareloo');
     },
-    constructTree: function (flatSiteinfo) {
+    constructTree : function (flatSiteinfo) {
       var siteinfo = {};
 
       for (var k in flatSiteinfo) {
@@ -580,8 +581,9 @@
       return siteinfo;
     },
 
-    pageShowing: -1,
-    show: function () {
+    pageShowing : -1,
+
+    show : function () {
       if (this.pageShowing === this.position) {
         return;
       }
@@ -611,12 +613,12 @@
       a.setAttribute('href', imageInfo.permalink);
       a.innerHTML = imageInfo.caption;
     },
-    removeAllChildren: function (e) {
+    removeAllChildren : function (e) {
       while (e.firstChild) {
         e.removeChild(e.firstChild);
       }
     },
-    onImageSourceSelected: function (ev) {
+    onImageSourceSelected : function (ev) {
   /*
       this.glasscaseDiv.style.opacity = 1;
       this.glasscaseDiv.style.position = 'fixed';
@@ -660,19 +662,19 @@
       this.doc.location = 'javascript:piclens = new PicLensContext();piclens.launch("' + createURI(file).asciiSpec + '", "", "")';
     },
     /*
-    setStyle: function (doc) {
+    setStyle : function (doc) {
       var css = doc.createElement('style');
       css.innerHTML =
         ' a {' +
-        '   background-color: black !important;' +
-        '   color: white !important;' +
-        '   font-size: small !important;' +
+        '   background-color : black !important;' +
+        '   color : white !important;' +
+        '   font-size : small !important;' +
         ' }' ;
 
       doc.body.appendChild(css);
     },
     */
-    showLoading: function (doc, show) {
+    showLoading : function (doc, show) {
       if (show) {
         var d = doc.createElement("div");
 
@@ -698,8 +700,10 @@
         this.loadingDiv = null;
       }
     },
-    glasscaseDiv: null,
-    glasscase: function () {
+
+    glasscaseDiv : null,
+
+    glasscase : function () {
       var doc = this.doc;
       var outerbox = this.outerbox = doc.createElement("div");
 
@@ -733,11 +737,10 @@
       this.glasscaseDiv = d;
       return d;
     },
-
-    onPageLoad: function () {
+    onPageLoad : function () {
       this.show();
     },
-    loadJson: function () {
+    loadJson : function () {
       var self = this;
       //this.setStyle(this.doc);
       this.showLoading(this.doc, true);
@@ -785,8 +788,7 @@
           var link = '<a href="' + jscode + '">' + definitions.name + '</a>';
           if (definitions.data.options && definitions.data.options.NSFW) {
             li.push('<li class="nsfw">' + link + '</li>');
-          }
-          else {
+          } else {
             li.push('<li>' + link + '</li>');
           }
         }
