@@ -217,6 +217,7 @@
       this.lastPageDoc   = null;
       this.requestingNextPage = false;
       this.largestRequestedImageIndex = -1;
+      this.largestLoadedImageIndex = -1;
 
       if (this.siteinfo.options && this.siteinfo.options.needReferer) {
         chrome.runtime.sendMessage(TBRL.id, {
@@ -252,6 +253,7 @@
 
       this.requestingNextPage = false;
       this.largestRequestedImageIndex = -1;
+      this.largestLoadedImageIndex = -1;
     },
     removeFilter : function () {
       chrome.runtime.sendMessage(TBRL.id, {
@@ -261,8 +263,19 @@
 
     requestingNextPage : false,
     largestRequestedImageIndex : -1,
+    largestLoadedImageIndex : -1,
     shouldPrefetch : function () {
       var b = (this.images.length - this.largestRequestedImageIndex <= this.PREFETCHSIZE);
+      var unloadedImages = this.largestLoadedImageIndex - this.largestRequestedImageIndex;
+      if (unloadedImages < this.PREFETCHSIZE) {
+        for (var i = 0 ; i < (this.PREFETCHSIZE - unloadedImages) ; i++) {
+          var img = this.images[this.largestLoadedImageIndex + 1];
+          if (img) {
+            (new Image()).src = img.imageSource;
+            this.largestLoadedImageIndex++;
+          }
+        }
+      }
       return b;
     },
     getAt : function (n) {
@@ -362,7 +375,6 @@
     },
     addToImageList : function (img) {
       if (img.imageSource && img.permalink) {
-        (new Image()).src = img.imageSource;
         this.images.push(img);
       }
     },
