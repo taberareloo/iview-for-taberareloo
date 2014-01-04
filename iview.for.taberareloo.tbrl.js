@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.11.0"
+// , "version"     : "1.11.1"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -561,6 +561,7 @@
     goHome : function () {
       requestBroker.clear();
       iviewLoader.stop();
+      this.showLoading(this.doc, false);
       this.position = 0;
       this.doc.getElementById('imageno').innerHTML = '';
       this.doc.getElementById('imagebox').style.display = 'none';
