@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.11.1"
+// , "version"     : "1.11.2"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -326,8 +326,7 @@
       var paragraphes = [].concat($X(siteinfo.paragraph, doc));
       settings.debug && console.debug(paragraphes);
       if (paragraphes.length === 0) {
-        console.error('Something wrong with siteinfo.paragraph');
-        throw new TypeError('Something wrong with siteinfo.paragraph');
+        console.warn('Something wrong with siteinfo.paragraph');
       }
       var self = this;
       paragraphes.map(function (paragraph, index) {
