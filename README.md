@@ -23,7 +23,7 @@
 1. Navigate images  
 	- `J` for the next image
 	- `K` for the previous image
-	- `T` to share using Taberareloo
+	- `T` to share using Taberareloo (+SHIFT to show QuickPostForm)
 	- `O` to open the original page where an image comes from
 	- `B` to go back home (to avoid reloading SITEINFOs)
 

@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.11.2"
+// , "version"     : "1.11.3"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -456,12 +456,12 @@
           return;
         }
 
-        if (ev.ctrlKey || ev.altKey || ev.shiftKey || ev.metaKey) {
+        if ((c !== 't') && (ev.ctrlKey || ev.altKey || ev.shiftKey || ev.metaKey)) {
           return;
         }
 
         if (c === 't') {
-          iview.share();
+          iview.share(ev.shiftKey);
         } else if (c === 'j') {
           iview.goRelative(1);
         } else if (c === 'k') {
@@ -474,7 +474,7 @@
 
       }, false);
     },
-    share : function () {
+    share : function (manually) {
       var i = iviewLoader.getAt(this.position);
 
       var title = i.caption || i.permalink;
@@ -508,7 +508,7 @@
       })).addCallback(function (ps) {
         chrome.runtime.sendMessage(TBRL.id, {
           request : 'share',
-          show    : false,
+          show    : manually,
           content : checkHttps(update({
             page    : ctx.title,
             pageUrl : ctx.href
