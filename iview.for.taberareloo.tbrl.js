@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "2.0.0"
+// , "version"     : "2.0.1"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -43,9 +43,8 @@
       if (patch) {
         var preference = this.getPreferences(patch.name) || {};
         if (preference.disabled) {
-          this.setPreferences(patch.name, MochiKit.Base.update(preference, {
-            disabled : false
-          }));
+          preference.disabled = false;
+          this.setPreferences(patch.name, preference);
           promise = this.loadAndRegister(patch.fileEntry, patch.metadata);
         } else {
           return Promise.resolve(true);
