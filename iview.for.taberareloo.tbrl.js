@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "1.11.5"
+// , "version"     : "2.0.1"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -48,28 +48,27 @@
 
   if (inContext('background')) {
     Patches.require = Patches.require || function (url) {
-      var deferred;
+      var promise;
       var name = window.url.parse(url).path.split(/[\/\\]/).pop();
       var patch = this[name];
       if (patch) {
         var preference = this.getPreferences(patch.name) || {};
         if (preference.disabled) {
-          this.setPreferences(patch.name, MochiKit.Base.update(preference, {
-            disabled : false
-          }));
-          deferred = this.loadAndRegister(patch.fileEntry, patch.metadata);
+          preference.disabled = false;
+          this.setPreferences(patch.name, preference);
+          promise = this.loadAndRegister(patch.fileEntry, patch.metadata);
         } else {
-          return succeed(true);
+          return Promise.resolve(true);
         }
       } else {
-        deferred = this.install(url, true);
+        promise = this.install(url, true);
       }
-      return deferred.addCallback(function (patch) {
+      return promise.then(function (patch) {
         return !!patch;
       });
     };
 
-    Patches.require('https://raw.github.com/YungSang/patches-for-taberareloo/master/utils/util.wedata.tbrl.js');
+    Patches.require('https://raw.githubusercontent.com/YungSang/patches-for-taberareloo/ready-for-v4.0.0/utils/util.wedata.tbrl.js');
 
     Menus._register({
       type     : 'separator',
@@ -91,7 +90,7 @@
       settings = req.settings;
       settings.debug && console.info(req);
       var database = new Wedata.Database('iview-for-taberareloo', req.url, settings.debug);
-      database.get(settings.refresh).addCallback(function (data) {
+      database.get(settings.refresh).then(function (data) {
         func(JSON.parse(data));
       });
     });
@@ -182,10 +181,10 @@
             var url  = args[0];
             var opts = args[1];
             var func = args[2];
-            request(url, opts).addCallback(function (res) {
+            request(url, opts).then(function (res) {
               func(res);
               self.timer = setTimeout(worker, 100);
-            }).addErrback(function (e) {
+            }).catch(function (e) {
               console.error(e);
               self.timer = setTimeout(worker, self.interval);
             });
@@ -510,11 +509,11 @@
         ext = Extractors['ReBlog - Tumblr link'];
       }
 
-      (ext.check(ctx) ? TBRL.extract(ctx, ext) : succeed({
+      (ext.check(ctx) ? TBRL.extract(ctx, ext) : Promise.resolve({
         type    : 'photo',
         item    : title,
         itemUrl : i.src()
-      })).addCallback(function (ps) {
+      })).then(function (ps) {
         chrome.runtime.sendMessage(TBRL.id, {
           request : 'share',
           show    : manually,
