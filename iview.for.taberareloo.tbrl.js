@@ -30,17 +30,6 @@
 (function () {
   'use strict';
 
-  var version = chrome.runtime.getManifest().version;
-  version = version.split('.');
-  if (version.length > 3) {
-    version.pop();
-  }
-  version = version.join('.');
-  if (semver.gte(version, '3.0.12')) {
-    Patches.install('https://raw.githubusercontent.com/YungSang/iview-for-taberareloo/ready-for-v4.0.0/iview.for.taberareloo.tbrl.js', true);
-    return;
-  }
-
   var IVIEW_URL    = 'http://yungsang.github.io/iview-for-taberareloo/';
   var SITEINFO_URL = 'http://wedata.github.io/iview/items.json';
 
