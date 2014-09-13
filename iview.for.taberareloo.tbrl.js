@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://yungsang.github.io/iview-for-taberareloo/*"]
-// , "version"     : "2.0.1"
+// , "version"     : "2.0.2"
 // , "downloadURL" : "http://yungsang.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -68,7 +68,7 @@
       });
     };
 
-    Patches.require('https://raw.githubusercontent.com/YungSang/patches-for-taberareloo/ready-for-v4.0.0/utils/util.wedata.tbrl.js');
+    Patches.require('https://raw.githubusercontent.com/YungSang/patches-for-taberareloo/master/utils/util.wedata.tbrl.js');
 
     Menus._register({
       type     : 'separator',
