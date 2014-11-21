@@ -2,7 +2,7 @@
   "name"             : "iview for Taberareloo",
   "description"      : "Launcher for \"iview for Taberareloo\"",
   "manifest_version" : 2,
-  "version"          : "1.0.2",
+  "version"          : "2.0.0",
   "app" : {
     "launch" : {
       "web_url" : "http://taberareloo.github.io/iview-for-taberareloo/"

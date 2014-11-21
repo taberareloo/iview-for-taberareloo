@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='jggkbkfagenfihbimmfclhgcjfoboame'>
-    <updatecheck codebase='https://github.com/taberareloo/iview-for-taberareloo/releases/download/launcher-v1.0.2/launcher.crx' version='1.0.2' />
+    <updatecheck codebase='https://github.com/taberareloo/iview-for-taberareloo/releases/download/launcher-v2.0.0/launcher.crx' version='2.0.0' />
   </app>
 </gupdate>
