@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://taberareloo.github.io/iview-for-taberareloo/*"]
-// , "version"     : "2.0.3"
+// , "version"     : "3.0.0"
 // , "downloadURL" : "http://taberareloo.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
