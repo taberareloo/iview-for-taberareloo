@@ -5,7 +5,7 @@
 // , "description" : "iview for Taberareloo"
 // , "include"     : ["background", "content"]
 // , "match"       : ["http://taberareloo.github.io/iview-for-taberareloo/*"]
-// , "version"     : "3.0.0"
+// , "version"     : "3.0.1"
 // , "downloadURL" : "http://taberareloo.github.io/iview-for-taberareloo/iview.for.taberareloo.tbrl.js"
 // }
 // ==/Taberareloo==
@@ -354,12 +354,15 @@
             var subparagraphes = $X(siteinfo.subParagraph.paragraph, paragraph);
             subparagraphes.map(function (subparagraph) {
               img = self.parseParagraph(subparagraph, siteinfo.subParagraph, baseURI);
-              img = MochiKit.Base.update({}, hashTemplate, d, img);
+              var tmp = update({}, hashTemplate);
+              tmp = update(tmp, d);
+              img = update(tmp, img);
               self.addToImageList(img);
             });
           } else {
             img = self.parseParagraph(paragraph, siteinfo, baseURI);
-            img = MochiKit.Base.update({}, hashTemplate, img);
+            var tmp = update({}, hashTemplate);
+            img = update(tmp, img);
             self.addToImageList(img);
           }
         }
