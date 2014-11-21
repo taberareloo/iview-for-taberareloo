@@ -1,6 +1,6 @@
 # iview for Taberareloo
 
-[![Build Status](https://travis-ci.org/YungSang/iview-for-taberareloo.png?branch=master)](https://travis-ci.org/YungSang/iview-for-taberareloo)
+[![Build Status](https://travis-ci.org/taberareloo/iview-for-taberareloo.png?branch=master)](https://travis-ci.org/taberareloo/iview-for-taberareloo)
 
 - Forked from [iview for Tombloo](https://github.com/ku/iview-for-tombloo)
 - Works as [a patch for Taberareloo](https://github.com/taberareloo/patches-for-taberareloo)
