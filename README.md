@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/YungSang/iview-for-taberareloo.png?branch=master)](https://travis-ci.org/YungSang/iview-for-taberareloo)
 
 - Forked from [iview for Tombloo](https://github.com/ku/iview-for-tombloo)
-- Works as [a patch for Taberareloo](https://github.com/YungSang/patches-for-taberareloo)
+- Works as [a patch for Taberareloo](https://github.com/taberareloo/patches-for-taberareloo)
 - Uses [wedata@GitHub/iview](http://wedata.github.io/iview/) for SITEINFOs
 
 ## Installation
@@ -18,7 +18,7 @@
 ## How to Use
 
 1. Right-click and select 'iview' in Taberareloo menu  
-	or just open http://yungsang.github.io/iview-for-taberareloo/
+	or just open http://taberareloo.github.io/iview-for-taberareloo/
 1. Select an image source on the list
 1. Navigate images  
 	- `J` for the next image

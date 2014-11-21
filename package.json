@@ -2,10 +2,10 @@
   "name": "iview-for-taberareloo",
   "description": "iview for Taberareloo",
   "version": "1.11.3",
-  "homepage": "https://github.com/YungSang/iview-for-taberareloo",
+  "homepage": "https://github.com/taberareloo/iview-for-taberareloo",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YungSang/iview-for-taberareloo.git"
+    "url": "https://github.com/taberareloo/iview-for-taberareloo.git"
   },
   "devDependencies": {
     "grunt": "~0.4.2",

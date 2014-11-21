@@ -5,12 +5,12 @@
   "version"          : "1.0.2",
   "app" : {
     "launch" : {
-      "web_url" : "http://yungsang.github.io/iview-for-taberareloo/"
+      "web_url" : "http://taberareloo.github.io/iview-for-taberareloo/"
     }    
   },
   "icons"            : {
     "128" : "icons/reblog-128.png",
     "16"  : "icons/reblog-16.png"
   },
-  "update_url"       : "http://yungsang.github.io/iview-for-taberareloo/update.xml"
+  "update_url"       : "http://taberareloo.github.io/iview-for-taberareloo/update.xml"
 }
